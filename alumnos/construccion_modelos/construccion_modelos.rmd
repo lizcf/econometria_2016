@@ -1,0 +1,103 @@
+---
+title: "Construcción de Modelos"
+author: "Lizbeth Contreras"
+date: "25 de abril de 2016"
+output: html_document
+---
+
+a. Modelo 1: escribe la recta de regresión en donde la variable dependiente: se reflejen los ingresos corrientes y en las variables independientes: educación formal, tamaño del hogar y región socioeconómica de la vivienda encuestada. Describir brevemente los resultados.
+
+```{r}
+library (foreign)
+library (car)
+```
+
+```{r, warning=FALSE}
+base <- read.dta ("base_a3.dta")
+
+#str(base$estado)
+#base$e2 <- as.numeric(base$estado)
+
+attach(base)
+
+model1 <- lm (ingcor~ed_formal+tam_hog+e2, base)
+model1
+
+summary(model1)
+
+# Se puede observar que los coeficientes son significativos, La varianza explicada por el modelo es de 15.5%  lo cual es considerado bajo.
+```
+
+b. Probar los supuestos del modelo 1: multicolinealidad, heterocedasticidad distribución normal de los residuos y linealidad.
+
+```{r, warning=FALSE}
+cor(base[,c("ingcor","ed_formal","tam_hog","e2")], method="pearson")
+
+
+# Se observa que la correlación entre ingcor y las demás variables es baja.
+
+# par(mfrow = c(2,2))
+# Para que salgan las 4 gráficas en la misma salida
+plot(model1)
+
+
+cr.plots(model1)
+
+
+# El modelo no cumple con el supuesto de normalidad, hay heterocedasticidad.
+# También se puede observar que hay varios outliers
+```
+
+c. Obtener el logaritmo de la variable de ingreso y realizar el modelo 2. Para esto, usar la nueva variable de ingresos en logaritmo como la variable dependiente. Describir brevemente los resultados.
+
+```{r, warning=FALSE}
+ingcor[ingcor==0]<-NA
+logingcor=log(ingcor)
+hist(logingcor)
+
+model2 <- lm (logingcor~ed_formal+tam_hog+e2, base)
+model2
+
+summary (model2)
+
+# Se puede observar que los coeficientes son significativos y que la varianza explicada por el modelo mejora aproximadamente 11%.
+```
+
+d. Probar nuevamente los supuestos sobre el modelo 2: multicolinealidad, heterocedasticidad distribución normal de los residuos y linealidad.
+
+```{r, warning=FALSE}
+base$login <- logingcor
+cor(base[,c("login","ed_formal","tam_hog", "e2")], use="complete")
+
+# La relación lineal entre las variables respecto al logaritmo de ingcor aumentó
+
+# par(mfrow = c(2,2))
+plot(model2)
+
+cr.plots(model2)
+
+
+# El modelo cumple con el supuesto de normalidad, no hay heterocedasticidad.
+```
+
+e. Describir las diferencias entre el modelo 1 y el modelo 2. ¿Cuál es el mejor? ¿Qué se haría para mejorarlo?
+
+```{r, warning=FALSE}
+ncvTest(model1)
+ncvTest(model2)
+
+# Se puede verificar que el modelo 1 presenta heteocedasticidad y el modelo 2 no.
+
+vif(model1)
+
+vif(model2)
+
+# Se puede observar que no hay multicolinealidad en los dos modelos.
+
+# Para conocer los outliers
+outlierTest(model1)
+
+outlierTest(model2)
+
+# Para mejorar el modelo se pueden tratar los outliers y/o incorporar otras variables que ayuden a explicar mejor el modelo.
+```
